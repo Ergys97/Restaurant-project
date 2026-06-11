@@ -2,6 +2,9 @@
 target/
 bin/
 
+# Build artifacts
+dependency-reduced-pom.xml
+
 # Dati runtime dell'applicazione
 data/
 *.txt
