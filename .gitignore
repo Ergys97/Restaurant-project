@@ -1,0 +1,15 @@
+# Build
+target/
+bin/
+
+# Dati runtime dell'applicazione
+data/
+*.txt
+
+# IDE
+.classpath
+.project
+.settings/
+.idea/
+*.iml
+.vscode/
