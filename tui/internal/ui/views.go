@@ -1,6 +1,10 @@
 package ui
 
-import "fmt"
+import (
+	"fmt"
+
+	"charm.land/lipgloss/v2"
+)
 
 func (m Model) render() string {
 	switch m.screen {
@@ -16,6 +20,9 @@ func (m Model) render() string {
 }
 
 func (m Model) renderReservations() string {
+	if m.creating {
+		return m.renderForm()
+	}
 	s := "Restaurant TUI\n\nPrenotazioni\n\n"
 	if m.loading {
 		s += "Caricamento...\n"
@@ -40,6 +47,26 @@ func (m Model) renderReservations() string {
 	if m.status != "" {
 		s += fmt.Sprintf("\n%s\n", m.status)
 	}
+	return s
+}
+
+func (m Model) renderForm() string {
+	fields := []string{
+		"Data: " + m.form.date,
+		"Coperti: " + m.form.covers,
+		"Piatto: " + m.form.dishName,
+		"Quantita': " + m.form.quantity,
+	}
+	s := "Restaurant TUI\n\nNuova prenotazione\n\n"
+	fieldStyle := lipgloss.NewStyle()
+	for i, f := range fields {
+		if i == m.form.field {
+			s += fieldStyle.Background(lipgloss.Color("#333")).Render(f) + "\n"
+		} else {
+			s += f + "\n"
+		}
+	}
+	s += "\ntab campo successivo  enter crea  esc annulla\n"
 	return s
 }
 

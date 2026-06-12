@@ -26,10 +26,12 @@ type Model struct {
 	status            string
 	reservationCursor int
 	confirmDelete     bool
+	form              reservationForm
+	creating          bool
 }
 
 func NewModel(client *api.Client) Model {
-	return Model{client: client, screen: dashboardScreen}
+	return Model{client: client, screen: dashboardScreen, form: newReservationForm()}
 }
 
 func (m Model) Init() tea.Cmd {
@@ -60,6 +62,32 @@ func (m Model) resetDemo() tea.Cmd {
 	}
 }
 
+func (m Model) createReservation() tea.Cmd {
+	req := api.ReservationRequest{
+		Date:   m.form.date,
+		Covers: atoiOrZero(m.form.covers),
+		DishOrders: []api.DishOrderRequest{{
+			DishName: m.form.dishName,
+			Quantity: atoiOrZero(m.form.quantity),
+		}},
+	}
+	return func() tea.Msg {
+		reservation, err := m.client.CreateReservation(req)
+		if err != nil {
+			return apiErrorMsg{err: err}
+		}
+		return reservationCreatedMsg{reservation: reservation}
+	}
+}
+
+func atoiOrZero(value string) int {
+	n, err := strconv.Atoi(value)
+	if err != nil {
+		return 0
+	}
+	return n
+}
+
 func (m Model) loadDashboard() tea.Cmd {
 	return func() tea.Msg {
 		config, err := m.client.GetConfig()
@@ -78,9 +106,58 @@ func (m Model) loadDashboard() tea.Cmd {
 	}
 }
 
+func (m Model) handleFormKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
+	switch msg.String() {
+	case "esc":
+		m.creating = false
+	case "enter":
+		return m, m.createReservation()
+	case "tab":
+		m.form.field = (m.form.field + 1) % 4
+	case "shift+tab":
+		m.form.field = (m.form.field + 3) % 4
+	case "backspace":
+		switch m.form.field {
+		case 0:
+			if len(m.form.date) > 0 {
+				m.form.date = m.form.date[:len(m.form.date)-1]
+			}
+		case 1:
+			if len(m.form.covers) > 0 {
+				m.form.covers = m.form.covers[:len(m.form.covers)-1]
+			}
+		case 2:
+			if len(m.form.dishName) > 0 {
+				m.form.dishName = m.form.dishName[:len(m.form.dishName)-1]
+			}
+		case 3:
+			if len(m.form.quantity) > 0 {
+				m.form.quantity = m.form.quantity[:len(m.form.quantity)-1]
+			}
+		}
+	default:
+		if len(msg.String()) == 1 {
+			switch m.form.field {
+			case 0:
+				m.form.date += msg.String()
+			case 1:
+				m.form.covers += msg.String()
+			case 2:
+				m.form.dishName += msg.String()
+			case 3:
+				m.form.quantity += msg.String()
+			}
+		}
+	}
+	return m, nil
+}
+
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
+		if m.creating {
+			return m.handleFormKey(msg)
+		}
 		switch msg.String() {
 		case "q", "ctrl+c":
 			return m, tea.Quit
@@ -111,6 +188,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.confirmDelete = false
 				return m, m.deleteSelectedReservation()
 			}
+		case "n":
+			if m.screen == reservationsScreen && !m.confirmDelete {
+				m.creating = true
+				m.form = newReservationForm()
+			}
 		case "esc":
 			m.confirmDelete = false
 		}
@@ -126,6 +208,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, m.loadDashboard()
 	case demoResetMsg:
 		m.status = "Demo reset: prenotazioni " + strconv.Itoa(msg.summary.Reservations)
+		m.loading = true
+		return m, m.loadDashboard()
+	case reservationCreatedMsg:
+		m.creating = false
+		m.status = "Prenotazione creata"
 		m.loading = true
 		return m, m.loadDashboard()
 	case apiErrorMsg:
