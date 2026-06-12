@@ -14,14 +14,16 @@ const (
 )
 
 type Model struct {
-	client       *api.Client
-	screen       screen
-	err          error
-	config       api.RestaurantConfig
-	reservations []api.Reservation
-	warehouse    api.ShoppingList
-	loading      bool
-	status       string
+	client            *api.Client
+	screen            screen
+	err               error
+	config            api.RestaurantConfig
+	reservations      []api.Reservation
+	warehouse         api.ShoppingList
+	loading           bool
+	status            string
+	reservationCursor int
+	confirmDelete     bool
 }
 
 func NewModel(client *api.Client) Model {
@@ -34,6 +36,16 @@ func (m Model) Init() tea.Cmd {
 	}
 	m.loading = true
 	return m.loadDashboard()
+}
+
+func (m Model) deleteSelectedReservation() tea.Cmd {
+	id := m.reservations[m.reservationCursor].ID
+	return func() tea.Msg {
+		if err := m.client.DeleteReservation(id); err != nil {
+			return apiErrorMsg{err: err}
+		}
+		return reservationDeletedMsg{id: id}
+	}
 }
 
 func (m Model) loadDashboard() tea.Cmd {
@@ -67,6 +79,25 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "r":
 			m.loading = true
 			return m, m.loadDashboard()
+		case "up", "k":
+			if m.screen == reservationsScreen && m.reservationCursor > 0 && !m.confirmDelete {
+				m.reservationCursor--
+			}
+		case "down", "j":
+			if m.screen == reservationsScreen && m.reservationCursor < len(m.reservations)-1 && !m.confirmDelete {
+				m.reservationCursor++
+			}
+		case "x":
+			if m.screen == reservationsScreen && len(m.reservations) > 0 && !m.confirmDelete {
+				m.confirmDelete = true
+			}
+		case "y":
+			if m.confirmDelete && m.screen == reservationsScreen && len(m.reservations) > 0 {
+				m.confirmDelete = false
+				return m, m.deleteSelectedReservation()
+			}
+		case "esc":
+			m.confirmDelete = false
 		}
 	case dashboardLoadedMsg:
 		m.loading = false
@@ -74,6 +105,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.reservations = msg.reservations
 		m.warehouse = msg.warehouse
 		m.status = "Dati caricati"
+	case reservationDeletedMsg:
+		m.status = "Prenotazione cancellata"
+		m.loading = true
+		return m, m.loadDashboard()
 	case apiErrorMsg:
 		m.loading = false
 		m.err = msg.err

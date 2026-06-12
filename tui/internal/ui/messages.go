@@ -8,6 +8,10 @@ type dashboardLoadedMsg struct {
 	warehouse    api.ShoppingList
 }
 
+type reservationDeletedMsg struct {
+	id string
+}
+
 type apiErrorMsg struct {
 	err error
 }
