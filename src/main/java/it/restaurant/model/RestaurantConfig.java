@@ -33,6 +33,17 @@ public class RestaurantConfig {
         this.initialized = true;
     }
 
+    public void apply(RestaurantConfig other) {
+        this.seats = other.seats;
+        this.workloadPerPerson = other.workloadPerPerson;
+        this.initialized = other.initialized;
+        this.ingredients = other.ingredients;
+        this.drinks = other.drinks;
+        this.extraGoods = other.extraGoods;
+        this.perCapitaDrinks = other.perCapitaDrinks;
+        this.perCapitaExtraGoods = other.perCapitaExtraGoods;
+    }
+
     @JsonIgnore
     public double getSustainableWorkload() { return seats * workloadPerPerson * SUSTAINABLE_FACTOR; }
 

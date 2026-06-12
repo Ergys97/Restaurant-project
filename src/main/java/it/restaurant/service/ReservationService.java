@@ -2,6 +2,8 @@ package it.restaurant.service;
 
 import it.restaurant.model.Reservation;
 import it.restaurant.model.RestaurantConfig;
+import it.restaurant.repository.DataStore;
+import it.restaurant.repository.StorageKeys;
 import it.restaurant.service.event.ReservationObserver;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -42,5 +44,26 @@ public class ReservationService {
         }
         observers.forEach(o -> o.onReservationConfirmed(candidate));
         return true;
+    }
+
+    public List<Reservation> listReservations(DataStore store) {
+        return store.loadList(StorageKeys.RESERVATIONS, Reservation.class);
+    }
+
+    public Reservation createReservation(Reservation candidate, List<Reservation> existing) {
+        if (candidate == null || !isSustainable(candidate, existing)) {
+            return null;
+        }
+        observers.forEach(o -> o.onReservationConfirmed(candidate));
+        return candidate;
+    }
+
+    public boolean cancelReservation(String id, DataStore store) {
+        List<Reservation> all = store.loadList(StorageKeys.RESERVATIONS, Reservation.class);
+        boolean removed = all.removeIf(r -> r.getId().equals(id));
+        if (removed) {
+            store.saveList(StorageKeys.RESERVATIONS, all);
+        }
+        return removed;
     }
 }

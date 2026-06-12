@@ -3,19 +3,27 @@ package it.restaurant.model;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class Reservation {
+    private String id;
     private LocalDate date;
     private int covers;
     private List<DishOrder> dishOrders = new ArrayList<>();
     private List<MenuOrder> menuOrders = new ArrayList<>();
 
-    private Reservation() {} // Jackson
+    private Reservation() {
+        this.id = UUID.randomUUID().toString();
+    }
 
     public Reservation(LocalDate date, int covers) {
+        this.id = UUID.randomUUID().toString();
         this.date = date;
         this.covers = covers;
     }
+
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
 
     public LocalDate getDate() { return date; }
     public int getCovers() { return covers; }

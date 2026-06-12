@@ -1,5 +1,6 @@
 package it.restaurant.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,6 +27,7 @@ public class ShoppingList {
         other.getExtraGoods().forEach(e -> FoodItems.mergeQuantity(extraGoods, e));
     }
 
+    @JsonIgnore
     public boolean isEmpty() {
         return ingredients.isEmpty() && drinks.isEmpty() && extraGoods.isEmpty();
     }
