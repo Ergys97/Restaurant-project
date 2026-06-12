@@ -49,21 +49,43 @@ func (m Model) renderReservations() string {
 }
 
 func (m Model) renderForm() string {
-	fields := []string{
-		"Data: " + m.form.date,
-		"Coperti: " + m.form.covers,
-		"Piatto: " + m.form.dishName,
-		"Quantita': " + m.form.quantity,
+	if m.dishesLoading {
+		return titleStyle.Render("Restaurant TUI") + "\n\nCaricamento piatti disponibili...\n"
 	}
 	s := titleStyle.Render("Restaurant TUI") + "\n\nNuova prenotazione\n\n"
-	for i, f := range fields {
-		if i == m.form.field {
-			s += highlightBg.Render(f) + "\n"
-		} else {
-			s += f + "\n"
-		}
+
+	dateLabel := "Data: " + m.form.date
+	if m.form.field == 0 {
+		dateLabel = highlightBg.Render(dateLabel)
 	}
-	s += "\n" + helpStyle.Render("tab campo successivo  enter crea  esc annulla") + "\n"
+	s += dateLabel + "\n"
+
+	coversLabel := "Coperti: " + m.form.covers
+	if m.form.field == 1 {
+		coversLabel = highlightBg.Render(coversLabel)
+	}
+	s += coversLabel + "\n"
+
+	s += "\nPiatti disponibili:\n"
+	for i, d := range m.dishes {
+		cursor := "  "
+		if i == m.form.dishCursor {
+			cursor = cursorStyle.Render("> ")
+		}
+		line := fmt.Sprintf("%s%s", cursor, d.Name)
+		if m.form.field == 2 && i == m.form.dishCursor {
+			line = highlightBg.Render(line)
+		}
+		s += "  " + line + "\n"
+	}
+
+	qtyLabel := fmt.Sprintf("Quantita': %s", m.form.quantity)
+	if m.form.field == 3 {
+		qtyLabel = highlightBg.Render(qtyLabel)
+	}
+	s += qtyLabel + "\n"
+
+	s += "\n" + helpStyle.Render("tab/up/down sposta  enter crea  esc annulla") + "\n"
 	return s
 }
 

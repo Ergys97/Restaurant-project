@@ -20,6 +20,10 @@ type reservationCreatedMsg struct {
 	reservation api.Reservation
 }
 
+type dishesFormLoadedMsg struct {
+	dishes []api.DishSummary
+}
+
 type apiErrorMsg struct {
 	err error
 }

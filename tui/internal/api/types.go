@@ -63,6 +63,17 @@ type MenuOrderRequest struct {
 	Quantity int    `json:"quantity"`
 }
 
+type DishSummary struct {
+	Name      string `json:"name"`
+	Available bool   `json:"available"`
+}
+
+type MenuSummary struct {
+	Name      string `json:"name"`
+	DishCount int    `json:"dishCount"`
+	Available bool   `json:"available"`
+}
+
 type DemoResetSummary struct {
 	Reservations int `json:"reservations"`
 	Ingredients  int `json:"ingredients"`

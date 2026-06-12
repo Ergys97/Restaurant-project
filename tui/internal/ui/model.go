@@ -22,7 +22,9 @@ type Model struct {
 	config            api.RestaurantConfig
 	reservations      []api.Reservation
 	warehouse         api.ShoppingList
+	dishes            []api.DishSummary
 	loading           bool
+	dishesLoading     bool
 	status            string
 	reservationCursor int
 	confirmDelete     bool
@@ -63,11 +65,15 @@ func (m Model) resetDemo() tea.Cmd {
 }
 
 func (m Model) createReservation() tea.Cmd {
+	dishName := ""
+	if m.form.dishCursor >= 0 && m.form.dishCursor < len(m.dishes) {
+		dishName = m.dishes[m.form.dishCursor].Name
+	}
 	req := api.ReservationRequest{
 		Date:   m.form.date,
 		Covers: atoiOrZero(m.form.covers),
 		DishOrders: []api.DishOrderRequest{{
-			DishName: m.form.dishName,
+			DishName: dishName,
 			Quantity: atoiOrZero(m.form.quantity),
 		}},
 	}
@@ -86,6 +92,16 @@ func atoiOrZero(value string) int {
 		return 0
 	}
 	return n
+}
+
+func (m Model) loadDishes() tea.Cmd {
+	return func() tea.Msg {
+		dishes, err := m.client.GetDishes()
+		if err != nil {
+			return apiErrorMsg{err: err}
+		}
+		return dishesFormLoadedMsg{dishes: dishes}
+	}
 }
 
 func (m Model) loadDashboard() tea.Cmd {
@@ -111,12 +127,25 @@ func (m Model) handleFormKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	case "esc":
 		m.creating = false
 	case "enter":
-		return m, m.createReservation()
+		if len(m.dishes) > 0 {
+			return m, m.createReservation()
+		}
 	case "tab":
 		m.form.field = (m.form.field + 1) % 4
 	case "shift+tab":
 		m.form.field = (m.form.field + 3) % 4
+	case "up", "k":
+		if m.form.field == 2 && m.form.dishCursor > 0 {
+			m.form.dishCursor--
+		}
+	case "down", "j":
+		if m.form.field == 2 && m.form.dishCursor < len(m.dishes)-1 {
+			m.form.dishCursor++
+		}
 	case "backspace":
+		if m.form.field == 2 {
+			break
+		}
 		switch m.form.field {
 		case 0:
 			if len(m.form.date) > 0 {
@@ -125,10 +154,6 @@ func (m Model) handleFormKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		case 1:
 			if len(m.form.covers) > 0 {
 				m.form.covers = m.form.covers[:len(m.form.covers)-1]
-			}
-		case 2:
-			if len(m.form.dishName) > 0 {
-				m.form.dishName = m.form.dishName[:len(m.form.dishName)-1]
 			}
 		case 3:
 			if len(m.form.quantity) > 0 {
@@ -142,8 +167,6 @@ func (m Model) handleFormKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 				m.form.date += msg.String()
 			case 1:
 				m.form.covers += msg.String()
-			case 2:
-				m.form.dishName += msg.String()
 			case 3:
 				m.form.quantity += msg.String()
 			}
@@ -190,12 +213,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "n":
 			if m.screen == reservationsScreen && !m.confirmDelete {
-				m.creating = true
+				m.dishesLoading = true
 				m.form = newReservationForm()
+				return m, m.loadDishes()
 			}
 		case "esc":
 			m.confirmDelete = false
 		}
+	case dishesFormLoadedMsg:
+		m.dishesLoading = false
+		m.dishes = msg.dishes
+		m.creating = true
+		m.form = newReservationForm()
 	case dashboardLoadedMsg:
 		m.loading = false
 		m.config = msg.config
@@ -212,6 +241,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, m.loadDashboard()
 	case reservationCreatedMsg:
 		m.creating = false
+		m.dishes = nil
 		m.status = "Prenotazione creata"
 		m.loading = true
 		return m, m.loadDashboard()

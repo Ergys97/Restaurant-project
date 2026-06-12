@@ -67,3 +67,55 @@ func TestDeleteReservation(t *testing.T) {
 		t.Fatalf("DeleteReservation returned error: %v", err)
 	}
 }
+
+func TestGetDishes(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet || r.URL.Path != "/api/dishes" {
+			t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`[{"name":"Pizza Margherita","available":true},{"name":"Insalata Caprese","available":true}]`))
+	}))
+	defer server.Close()
+
+	client := NewClient(server.URL)
+	dishes, err := client.GetDishes()
+	if err != nil {
+		t.Fatalf("GetDishes returned error: %v", err)
+	}
+	if len(dishes) != 2 {
+		t.Fatalf("expected 2 dishes, got %d", len(dishes))
+	}
+	if dishes[0].Name != "Pizza Margherita" {
+		t.Fatalf("expected Pizza Margherita, got %q", dishes[0].Name)
+	}
+	if !dishes[1].Available {
+		t.Fatalf("expected dish to be available")
+	}
+}
+
+func TestGetMenus(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet || r.URL.Path != "/api/menus" {
+			t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`[{"name":"Menu Italiano","dishCount":2,"available":true}]`))
+	}))
+	defer server.Close()
+
+	client := NewClient(server.URL)
+	menus, err := client.GetMenus()
+	if err != nil {
+		t.Fatalf("GetMenus returned error: %v", err)
+	}
+	if len(menus) != 1 {
+		t.Fatalf("expected 1 menu, got %d", len(menus))
+	}
+	if menus[0].Name != "Menu Italiano" {
+		t.Fatalf("expected Menu Italiano, got %q", menus[0].Name)
+	}
+	if menus[0].DishCount != 2 {
+		t.Fatalf("expected dishCount 2, got %d", menus[0].DishCount)
+	}
+}

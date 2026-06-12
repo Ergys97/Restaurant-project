@@ -49,6 +49,18 @@ func (c *Client) DeleteReservation(id string) error {
 	return c.send(http.MethodDelete, "/api/reservations/"+id, nil, nil)
 }
 
+func (c *Client) GetDishes() ([]DishSummary, error) {
+	var out []DishSummary
+	err := c.get("/api/dishes", &out)
+	return out, err
+}
+
+func (c *Client) GetMenus() ([]MenuSummary, error) {
+	var out []MenuSummary
+	err := c.get("/api/menus", &out)
+	return out, err
+}
+
 func (c *Client) ResetDemo() (DemoResetSummary, error) {
 	var out DemoResetSummary
 	err := c.send(http.MethodPost, "/api/admin/demo/reset", nil, &out)
