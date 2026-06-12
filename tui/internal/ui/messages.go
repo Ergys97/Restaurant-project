@@ -12,6 +12,10 @@ type reservationDeletedMsg struct {
 	id string
 }
 
+type demoResetMsg struct {
+	summary api.DemoResetSummary
+}
+
 type apiErrorMsg struct {
 	err error
 }

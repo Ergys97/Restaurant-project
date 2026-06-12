@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"strconv"
+
 	"restaurant-tui/internal/api"
 	tea "charm.land/bubbletea/v2"
 )
@@ -48,6 +50,16 @@ func (m Model) deleteSelectedReservation() tea.Cmd {
 	}
 }
 
+func (m Model) resetDemo() tea.Cmd {
+	return func() tea.Msg {
+		summary, err := m.client.ResetDemo()
+		if err != nil {
+			return apiErrorMsg{err: err}
+		}
+		return demoResetMsg{summary: summary}
+	}
+}
+
 func (m Model) loadDashboard() tea.Cmd {
 	return func() tea.Msg {
 		config, err := m.client.GetConfig()
@@ -79,6 +91,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "r":
 			m.loading = true
 			return m, m.loadDashboard()
+		case "d":
+			m.loading = true
+			return m, m.resetDemo()
 		case "up", "k":
 			if m.screen == reservationsScreen && m.reservationCursor > 0 && !m.confirmDelete {
 				m.reservationCursor--
@@ -107,6 +122,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.status = "Dati caricati"
 	case reservationDeletedMsg:
 		m.status = "Prenotazione cancellata"
+		m.loading = true
+		return m, m.loadDashboard()
+	case demoResetMsg:
+		m.status = "Demo reset: prenotazioni " + strconv.Itoa(msg.summary.Reservations)
 		m.loading = true
 		return m, m.loadDashboard()
 	case apiErrorMsg:
