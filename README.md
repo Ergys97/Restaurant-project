@@ -70,14 +70,24 @@ mvn test
 The project includes a Go TUI (Terminal User Interface) that communicates with
 the Spring Boot REST API.
 
-### Start the backend
+### One-command startup
+
+```powershell
+.\run.ps1
+```
+
+This builds and starts both backend and TUI automatically.
+
+### Start separately
+
+Backend first:
 
 ```powershell
 mvn package
 java -jar target\restaurant.jar --restaurant.demo.reset-enabled=true
 ```
 
-### Start the TUI
+Then TUI:
 
 ```powershell
 go run .\tui\cmd\restaurant-tui
