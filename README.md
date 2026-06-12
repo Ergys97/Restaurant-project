@@ -65,6 +65,51 @@ root. The directory is created automatically on first run if it does not exist.
 mvn test
 ```
 
+## REST API + Bubble Tea TUI
+
+The project includes a Go TUI (Terminal User Interface) that communicates with
+the Spring Boot REST API.
+
+### Start the backend
+
+```powershell
+mvn package
+java -jar target\restaurant.jar --restaurant.demo.reset-enabled=true
+```
+
+### Start the TUI
+
+```powershell
+go run .\tui\cmd\restaurant-tui
+```
+
+Optional custom backend URL:
+
+```powershell
+$env:RESTAURANT_API_URL="http://localhost:8080"
+go run .\tui\cmd\restaurant-tui
+```
+
+### TUI commands
+
+| Key | Action |
+|-----|--------|
+| `Tab` / `Right` | Next screen |
+| `Left` / `Shift+Tab` | Previous screen |
+| `r` | Refresh data |
+| `d` | Reset demo data |
+| `n` | New reservation (reservations screen) |
+| `x` | Delete selected reservation |
+| `y` | Confirm deletion |
+| `Esc` | Cancel / close |
+| `q` / `Ctrl+C` | Quit |
+
+### Run TUI tests
+
+```powershell
+go test .\tui\...
+```
+
 ## History
 
 Originally developed as a university project. Modernised with:
