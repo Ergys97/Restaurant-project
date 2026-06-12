@@ -10,11 +10,14 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class JsonDataStore implements DataStore {
 
     private final ObjectMapper mapper;
     private final Path dataDir;
+    private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
     public JsonDataStore(Path dataDir) {
         this.dataDir = dataDir;
@@ -31,39 +34,59 @@ public class JsonDataStore implements DataStore {
 
     @Override
     public <T> List<T> loadList(String key, Class<T> type) {
-        Path file = fileFor(key);
-        if (!Files.exists(file)) {
-            return new ArrayList<>();
-        }
-        CollectionType listType = mapper.getTypeFactory().constructCollectionType(ArrayList.class, type);
+        lock.readLock().lock();
         try {
-            return mapper.readValue(file.toFile(), listType);
-        } catch (IOException e) {
-            throw new DataStoreException("Cannot read " + file, e);
+            Path file = fileFor(key);
+            if (!Files.exists(file)) {
+                return new ArrayList<>();
+            }
+            CollectionType listType = mapper.getTypeFactory().constructCollectionType(ArrayList.class, type);
+            try {
+                return mapper.readValue(file.toFile(), listType);
+            } catch (IOException e) {
+                throw new DataStoreException("Cannot read " + file, e);
+            }
+        } finally {
+            lock.readLock().unlock();
         }
     }
 
     @Override
     public <T> void saveList(String key, List<T> items) {
-        write(fileFor(key), items);
+        lock.writeLock().lock();
+        try {
+            write(fileFor(key), items);
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     @Override
     public <T> Optional<T> load(String key, Class<T> type) {
-        Path file = fileFor(key);
-        if (!Files.exists(file)) {
-            return Optional.empty();
-        }
+        lock.readLock().lock();
         try {
-            return Optional.of(mapper.readValue(file.toFile(), type));
-        } catch (IOException e) {
-            throw new DataStoreException("Cannot read " + file, e);
+            Path file = fileFor(key);
+            if (!Files.exists(file)) {
+                return Optional.empty();
+            }
+            try {
+                return Optional.of(mapper.readValue(file.toFile(), type));
+            } catch (IOException e) {
+                throw new DataStoreException("Cannot read " + file, e);
+            }
+        } finally {
+            lock.readLock().unlock();
         }
     }
 
     @Override
     public <T> void save(String key, T item) {
-        write(fileFor(key), item);
+        lock.writeLock().lock();
+        try {
+            write(fileFor(key), item);
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     private Path fileFor(String key) { return dataDir.resolve(key + ".json"); }

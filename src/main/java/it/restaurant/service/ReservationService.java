@@ -8,13 +8,18 @@ import it.restaurant.service.event.ReservationObserver;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class ReservationService {
 
     private final RestaurantConfig config;
+    private final DataStore store;
     private final List<ReservationObserver> observers = new ArrayList<>();
 
-    public ReservationService(RestaurantConfig config) { this.config = config; }
+    public ReservationService(RestaurantConfig config, DataStore store) {
+        this.config = config;
+        this.store = store;
+    }
 
     public void addObserver(ReservationObserver observer) { observers.add(observer); }
 
@@ -38,32 +43,90 @@ public class ReservationService {
         return total < config.getSustainableWorkload();
     }
 
-    public boolean confirm(Reservation candidate, List<Reservation> existing) {
-        if (candidate == null || !isSustainable(candidate, existing)) {
-            return false;
-        }
-        observers.forEach(o -> o.onReservationConfirmed(candidate));
-        return true;
-    }
-
-    public List<Reservation> listReservations(DataStore store) {
+    public List<Reservation> listReservations() {
         return store.loadList(StorageKeys.RESERVATIONS, Reservation.class);
     }
 
-    public Reservation createReservation(Reservation candidate, List<Reservation> existing) {
-        if (candidate == null || !isSustainable(candidate, existing)) {
-            return null;
+    private boolean checkStockSufficiency(Reservation candidate) {
+        var ingredients = store.loadList(StorageKeys.INGREDIENTS, it.restaurant.model.Ingredient.class);
+        var drinks = store.loadList(StorageKeys.DRINKS, it.restaurant.model.Drink.class);
+        var extraGoods = store.loadList(StorageKeys.EXTRA_GOODS, it.restaurant.model.ExtraGood.class);
+
+        // Map to aggregate required ingredients
+        java.util.Map<String, Integer> requiredIngredients = new java.util.HashMap<>();
+        for (var order : candidate.getDishOrders()) {
+            for (var needed : order.getDish().getIngredients()) {
+                requiredIngredients.merge(needed.getName().toLowerCase(), order.getQuantity(), Integer::sum);
+            }
         }
-        observers.forEach(o -> o.onReservationConfirmed(candidate));
-        return candidate;
+        for (var order : candidate.getMenuOrders()) {
+            for (var dish : order.getMenu().getDishes()) {
+                for (var needed : dish.getIngredients()) {
+                    requiredIngredients.merge(needed.getName().toLowerCase(), order.getQuantity(), Integer::sum);
+                }
+            }
+        }
+
+        // Validate ingredients
+        for (var entry : requiredIngredients.entrySet()) {
+            var matching = ingredients.stream()
+                    .filter(i -> i.getName().equalsIgnoreCase(entry.getKey()))
+                    .mapToInt(it.restaurant.model.Ingredient::getQuantity)
+                    .sum();
+            if (matching < entry.getValue()) {
+                return false;
+            }
+        }
+
+        // Validate drinks
+        for (var entry : config.getPerCapitaDrinks().entrySet()) {
+            int needed = entry.getValue() * candidate.getCovers();
+            var matching = drinks.stream()
+                    .filter(d -> d.getName().equalsIgnoreCase(entry.getKey()))
+                    .mapToInt(it.restaurant.model.Drink::getQuantity)
+                    .sum();
+            if (matching < needed) {
+                return false;
+            }
+        }
+
+        // Validate extra goods
+        for (var entry : config.getPerCapitaExtraGoods().entrySet()) {
+            int needed = entry.getValue() * candidate.getCovers();
+            var matching = extraGoods.stream()
+                    .filter(eg -> eg.getName().equalsIgnoreCase(entry.getKey()))
+                    .mapToInt(it.restaurant.model.ExtraGood::getQuantity)
+                    .sum();
+            if (matching < needed) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
-    public boolean cancelReservation(String id, DataStore store) {
+    public Optional<Reservation> createReservation(Reservation candidate, List<Reservation> existing) {
+        if (candidate == null || !isSustainable(candidate, existing) || !checkStockSufficiency(candidate)) {
+            return Optional.empty();
+        }
+        observers.forEach(o -> o.onReservationConfirmed(candidate));
+        return Optional.of(candidate);
+    }
+
+    public boolean cancelReservation(String id) {
         List<Reservation> all = store.loadList(StorageKeys.RESERVATIONS, Reservation.class);
         boolean removed = all.removeIf(r -> r.getId().equals(id));
         if (removed) {
             store.saveList(StorageKeys.RESERVATIONS, all);
         }
         return removed;
+    }
+
+    public void cleanExpired() {
+        List<Reservation> all = store.loadList(StorageKeys.RESERVATIONS, Reservation.class);
+        boolean removed = all.removeIf(r -> r.getDate().isBefore(LocalDate.now()));
+        if (removed) {
+            store.saveList(StorageKeys.RESERVATIONS, all);
+        }
     }
 }

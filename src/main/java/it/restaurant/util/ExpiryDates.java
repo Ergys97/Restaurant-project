@@ -10,6 +10,10 @@ public final class ExpiryDates {
         return today.plusDays(ThreadLocalRandom.current().nextInt(5, 11));
     }
 
+    public static LocalDate random(LocalDate today, int daysAhead) {
+        return today.plusDays(daysAhead);
+    }
+
     public static LocalDate inDays(LocalDate today, int days) {
         return today.plusDays(days);
     }

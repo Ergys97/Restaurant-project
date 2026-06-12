@@ -31,6 +31,7 @@ public class ReservationController {
     public void run() {
         int choice;
         do {
+            reservationService.cleanExpired();
             choice = menu.choose();
             switch (choice) {
                 case 1 -> collectReservation();
@@ -48,7 +49,7 @@ public class ReservationController {
             view.showLine(Messages.NO_MENU_OR_DISHES);
             return;
         }
-        List<Reservation> existing = store.loadList(StorageKeys.RESERVATIONS, Reservation.class);
+        List<Reservation> existing = reservationService.listReservations();
         int days = ConsoleInput.readIntAtLeast(Messages.ASK_DAYS_FOR_RESERVATION, 0);
         LocalDate date = ExpiryDates.inDays(today, days);
         int maxSeats = reservationService.availableSeats(date, existing);
@@ -59,7 +60,7 @@ public class ReservationController {
         int covers = ConsoleInput.readInt(Messages.ASK_PEOPLE_FOR_RESERVATION, 1, maxSeats);
         Reservation reservation = new Reservation(date, covers);
         fillOrders(reservation, menus, dishes, covers);
-        boolean accepted = reservationService.confirm(reservation, existing);
+        boolean accepted = reservationService.createReservation(reservation, existing).isPresent();
         view.showLine(accepted ? Messages.RESERVATION_ACCEPTED : Messages.RESERVATION_REJECTED);
     }
 

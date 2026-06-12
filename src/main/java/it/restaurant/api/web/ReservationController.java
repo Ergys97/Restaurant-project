@@ -35,11 +35,13 @@ public class ReservationController {
 
     @GetMapping
     public ResponseEntity<List<Reservation>> listReservations() {
-        return ResponseEntity.ok(reservationService.listReservations(store));
+        reservationService.cleanExpired();
+        return ResponseEntity.ok(reservationService.listReservations());
     }
 
     @PostMapping
     public ResponseEntity<?> createReservation(@Valid @RequestBody ReservationRequest request) {
+        reservationService.cleanExpired();
         Reservation reservation = new Reservation(request.getDate(), request.getCovers());
 
         if (request.getDishOrders() != null) {
@@ -72,17 +74,15 @@ public class ReservationController {
             }
         }
 
-        List<Reservation> existing = reservationService.listReservations(store);
-        Reservation created = reservationService.createReservation(reservation, existing);
-        if (created == null) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        }
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        List<Reservation> existing = reservationService.listReservations();
+        return reservationService.createReservation(reservation, existing)
+                .map(created -> ResponseEntity.status(HttpStatus.CREATED).body(created))
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.CONFLICT).build());
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> cancelReservation(@PathVariable String id) {
-        boolean removed = reservationService.cancelReservation(id, store);
+        boolean removed = reservationService.cancelReservation(id);
         if (!removed) {
             return ResponseEntity.notFound().build();
         }

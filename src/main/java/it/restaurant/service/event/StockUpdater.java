@@ -30,20 +30,20 @@ public class StockUpdater implements ReservationObserver {
         }
         config.getPerCapitaDrinks().forEach((name, perCapita) ->
                 FoodItems.findByName(drinks, name).ifPresent(d ->
-                        d.setQuantity(d.getQuantity() - perCapita * reservation.getCovers())));
+                        d.setQuantity(Math.max(0, d.getQuantity() - perCapita * reservation.getCovers()))));
         config.getPerCapitaExtraGoods().forEach((name, perCapita) ->
                 FoodItems.findByName(extraGoods, name).ifPresent(e ->
-                        e.setQuantity(e.getQuantity() - perCapita * reservation.getCovers())));
+                        e.setQuantity(Math.max(0, e.getQuantity() - perCapita * reservation.getCovers()))));
 
         store.saveList(StorageKeys.INGREDIENTS, ingredients);
         store.saveList(StorageKeys.DRINKS, drinks);
         store.saveList(StorageKeys.EXTRA_GOODS, extraGoods);
-    }
-
-    private void consumeDishIngredients(java.util.List<Ingredient> stock, Dish dish, int portions) {
-        for (Ingredient needed : dish.getIngredients()) {
-            FoodItems.findByName(stock, needed.getName())
-                    .ifPresent(i -> i.setQuantity(i.getQuantity() - portions));
-        }
-    }
+     }
+ 
+     private void consumeDishIngredients(java.util.List<Ingredient> stock, Dish dish, int portions) {
+         for (Ingredient needed : dish.getIngredients()) {
+             FoodItems.findByName(stock, needed.getName())
+                     .ifPresent(i -> i.setQuantity(Math.max(0, i.getQuantity() - portions)));
+         }
+     }
 }

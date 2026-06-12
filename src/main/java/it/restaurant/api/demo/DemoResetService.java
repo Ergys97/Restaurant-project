@@ -16,7 +16,7 @@ public class DemoResetService {
     private final KitchenService kitchenService;
 
     public DemoResetService(DataStore store, RestaurantConfig currentConfig,
-                            KitchenService kitchenService, WarehouseService warehouseService) {
+                            KitchenService kitchenService) {
         this.store = store;
         this.currentConfig = currentConfig;
         this.kitchenService = kitchenService;

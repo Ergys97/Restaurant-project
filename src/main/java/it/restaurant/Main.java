@@ -21,7 +21,7 @@ public class Main {
         ManagerController manager = new ManagerController(store, view);
         RestaurantConfig config = manager.ensureConfig();
 
-        ReservationService reservationService = new ReservationService(config);
+        ReservationService reservationService = new ReservationService(config, store);
         KitchenService kitchenService = new KitchenService(store, config);
         WarehouseService warehouseService = new WarehouseService(store);
         ReservationNotifier notifier = new ReservationNotifier();

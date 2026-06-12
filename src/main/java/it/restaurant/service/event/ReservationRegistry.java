@@ -19,7 +19,6 @@ public class ReservationRegistry implements ReservationObserver {
     @Override
     public void onReservationConfirmed(Reservation reservation) {
         List<Reservation> all = store.loadList(StorageKeys.RESERVATIONS, Reservation.class);
-        all.removeIf(r -> r.getDate().isBefore(LocalDate.now()));
         all.add(reservation);
         store.saveList(StorageKeys.RESERVATIONS, all);
         notifier.flag();

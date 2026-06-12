@@ -50,9 +50,9 @@ public class RestaurantConfig {
     public int getSeats() { return seats; }
     public double getWorkloadPerPerson() { return workloadPerPerson; }
     public boolean isInitialized() { return initialized; }
-    public List<Ingredient> getIngredients() { return ingredients; }
-    public List<Drink> getDrinks() { return drinks; }
-    public List<ExtraGood> getExtraGoods() { return extraGoods; }
-    public Map<String, Integer> getPerCapitaDrinks() { return perCapitaDrinks; }
-    public Map<String, Integer> getPerCapitaExtraGoods() { return perCapitaExtraGoods; }
+    public List<Ingredient> getIngredients() { return java.util.Collections.unmodifiableList(ingredients); }
+    public List<Drink> getDrinks() { return java.util.Collections.unmodifiableList(drinks); }
+    public List<ExtraGood> getExtraGoods() { return java.util.Collections.unmodifiableList(extraGoods); }
+    public Map<String, Integer> getPerCapitaDrinks() { return java.util.Collections.unmodifiableMap(perCapitaDrinks); }
+    public Map<String, Integer> getPerCapitaExtraGoods() { return java.util.Collections.unmodifiableMap(perCapitaExtraGoods); }
 }

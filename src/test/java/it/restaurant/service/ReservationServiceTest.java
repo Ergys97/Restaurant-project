@@ -3,10 +3,12 @@ package it.restaurant.service;
 import static org.junit.jupiter.api.Assertions.*;
 
 import it.restaurant.model.*;
+import it.restaurant.repository.DataStore;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -20,7 +22,23 @@ class ReservationServiceTest {
     void setUp() {
         RestaurantConfig config = new RestaurantConfig(20, 5.0,
                 List.of(), List.of(), List.of(), Map.of(), Map.of());
-        service = new ReservationService(config);
+        DataStore store = new DataStore() {
+            @Override
+            @SuppressWarnings("unchecked")
+            public <T> List<T> loadList(String key, Class<T> type) {
+                if (key.equals("ingredients")) {
+                    return (List<T>) List.of(new Ingredient("salame", 100, DAY));
+                }
+                return List.of();
+            }
+            @Override
+            public <T> void saveList(String key, List<T> items) {}
+            @Override
+            public <T> Optional<T> load(String key, Class<T> type) { return Optional.empty(); }
+            @Override
+            public <T> void save(String key, T item) {}
+        };
+        service = new ReservationService(config, store);
         Recipe recipe = new Recipe("salame", List.of(new Ingredient("salame", 15, DAY)), 0.4, 1.0, 10);
         dish = new Dish(recipe, DAY.plusDays(10));
     }
@@ -60,11 +78,11 @@ class ReservationServiceTest {
         List<Reservation> notified = new ArrayList<>();
         service.addObserver(notified::add);
 
-        assertTrue(service.confirm(reservationOf(2, 1), new ArrayList<>()));
+        assertTrue(service.createReservation(reservationOf(2, 1), new ArrayList<>()).isPresent());
         assertEquals(1, notified.size());
 
-        assertFalse(service.confirm(null, new ArrayList<>()));
-        assertFalse(service.confirm(reservationOf(1, 301), new ArrayList<>()));
+        assertFalse(service.createReservation(null, new ArrayList<>()).isPresent());
+        assertFalse(service.createReservation(reservationOf(1, 301), new ArrayList<>()).isPresent());
         assertEquals(1, notified.size());
     }
 }

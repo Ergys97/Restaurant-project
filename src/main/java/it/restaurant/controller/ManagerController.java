@@ -30,7 +30,8 @@ public class ManagerController {
     public ManagerController(DataStore store, ConsoleView view) {
         this.store = store;
         this.view = view;
-        this.kitchenService = new KitchenService(store, null);
+        this.config = store.load(StorageKeys.RESTAURANT_CONFIG, RestaurantConfig.class).orElseGet(RestaurantConfig::new);
+        this.kitchenService = new KitchenService(store, this.config);
     }
 
     public RestaurantConfig ensureConfig() {

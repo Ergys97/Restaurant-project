@@ -51,8 +51,8 @@ public class RestaurantBeans {
     }
 
     @Bean
-    ReservationService reservationService(RestaurantConfig config, List<ReservationObserver> observers) {
-        ReservationService service = new ReservationService(config);
+    ReservationService reservationService(RestaurantConfig config, DataStore store, List<ReservationObserver> observers) {
+        ReservationService service = new ReservationService(config, store);
         observers.forEach(service::addObserver);
         return service;
     }

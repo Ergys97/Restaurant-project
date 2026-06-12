@@ -17,3 +17,15 @@ jobs:
           cache: maven
       - name: Build and test
         run: mvn --batch-mode verify
+
+  test-go:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+      - name: Run Go tests
+        working-directory: tui
+        run: go test -v ./...
