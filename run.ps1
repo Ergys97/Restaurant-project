@@ -26,7 +26,7 @@ try {
 
     Write-Host "Backend pronto. Avvio TUI..." -ForegroundColor Cyan
     $env:RESTAURANT_API_URL = $ApiUrl
-    go run $root\tui\cmd\restaurant-tui
+    go run -C $root\tui .\cmd\restaurant-tui
 } finally {
     Write-Host "Arresto backend..." -ForegroundColor Cyan
     Stop-Process -Id $backend.Id -Force -ErrorAction SilentlyContinue
