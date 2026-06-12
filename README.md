@@ -120,6 +120,24 @@ go run .\tui\cmd\restaurant-tui
 go test .\tui\...
 ```
 
+## Sviluppi futuri
+
+### Alta priorità
+- **Autenticazione REST API** — Proteggere gli endpoint con Spring Security e JWT, con ruoli distinti per Gestore, Addetto e Magazziniere.
+- **Gestione scadenze ingredienti** — Alert automatici e/o endpoint dedicato (`/api/warehouse/expiring?days=N`) per segnalare i prodotti in scadenza.
+- **Documentazione API (Swagger/OpenAPI)** — Integrare `springdoc-openapi` per generare documentazione interattiva su `/swagger-ui.html`.
+
+### Media priorità
+- **Filtri e paginazione** — Aggiungere filtri per data e paginazione agli endpoint di lista (`/api/reservations`, `/api/dishes`).
+- **Storico prenotazioni** — Archiviare le prenotazioni scadute anziché eliminarle, per abilitare statistiche e analytics.
+- **Gestione tavoli** — Associare prenotazioni a tavoli specifici con capacità individuale, non solo conteggio posti globale.
+- **Docker + docker-compose** — Containerizzare backend Java e TUI Go per semplificare il deploy.
+
+### Bassa priorità
+- **Migrazione a database reale** — Passare da `JsonDataStore` a SQLite/H2 con Spring Data JPA. L'interfaccia `DataStore` esistente rende il refactoring pulito.
+- **WebSocket per notifiche real-time** — Sostituire il flag booleano di `ReservationNotifier` con WebSocket per notifiche push al magazziniere nel TUI.
+- **Test Go nel TUI** — Ampliare la copertura dei test del client Go Bubble Tea.
+
 ## History
 
 Originally developed as a university project. Modernised with:
