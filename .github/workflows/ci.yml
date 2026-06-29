@@ -25,7 +25,11 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version-file: tui/go.mod
+          cache-dependency-path: tui/go.sum
+      - name: Check Go module tidy
+        working-directory: tui
+        run: go mod tidy -diff
       - name: Run Go tests
         working-directory: tui
         run: go test -v ./...

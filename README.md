@@ -76,7 +76,7 @@ the Spring Boot REST API.
 .\run.ps1
 ```
 
-This builds and starts both backend and TUI automatically.
+This builds the backend jar, starts the Spring Boot API, waits for readiness, then launches the TUI.
 
 ### Start separately
 

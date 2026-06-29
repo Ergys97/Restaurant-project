@@ -5,8 +5,11 @@ param(
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 
+Write-Host "Build backend..." -ForegroundColor Cyan
+mvn -q -DskipTests package
+
 Write-Host "Avvio backend..." -ForegroundColor Cyan
-$backend = Start-Process -FilePath java -ArgumentList "-jar $root\target\restaurant.jar --restaurant.demo.reset-enabled=true" -NoNewWindow -PassThru
+$backend = Start-Process -FilePath java -ArgumentList "-jar `"$root\target\restaurant.jar`" --restaurant.demo.reset-enabled=true" -NoNewWindow -PassThru
 
 try {
     Write-Host "Attendo il backend..." -ForegroundColor Cyan

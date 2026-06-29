@@ -62,7 +62,7 @@ class ReservationControllerTest {
                 "date": "2026-07-01",
                 "covers": 4,
                 "dishOrders": [
-                    {"dishName": "Pizza Margherita", "quantity": 2}
+                    {"dishName": "Pizza Margherita", "quantity": 1}
                 ]
             }
         """;

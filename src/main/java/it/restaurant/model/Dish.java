@@ -1,5 +1,6 @@
 package it.restaurant.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -19,6 +20,7 @@ public class Dish {
     public String getName() { return name; }
     public Recipe getRecipe() { return recipe; }
     public LocalDate getAvailableUntil() { return availableUntil; }
+    @JsonIgnore
     public List<Ingredient> getIngredients() { return recipe.getIngredients(); }
     public double workload() { return recipe.getWorkloadPerPortion(); }
 
