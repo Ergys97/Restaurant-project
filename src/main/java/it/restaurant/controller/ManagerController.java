@@ -4,6 +4,7 @@ import it.restaurant.model.*;
 import it.restaurant.repository.*;
 import it.restaurant.service.KitchenService;
 import it.restaurant.util.ExpiryDates;
+import java.time.LocalDate;
 import it.restaurant.view.*;
 import java.time.LocalDate;
 import java.util.*;
@@ -31,7 +32,7 @@ public class ManagerController {
         this.store = store;
         this.view = view;
         this.config = store.load(StorageKeys.RESTAURANT_CONFIG, RestaurantConfig.class).orElseGet(RestaurantConfig::new);
-        this.kitchenService = new KitchenService(store, this.config);
+        this.kitchenService = new KitchenService(store, this.config, new DataStoreTransaction());
     }
 
     public RestaurantConfig ensureConfig() {

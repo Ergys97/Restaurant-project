@@ -14,7 +14,7 @@ public class InMemoryStore implements DataStore {
     @SuppressWarnings("unchecked")
     public <T> List<T> loadList(String key, Class<T> type) {
         List<T> list = (List<T>) storage.get(key);
-        return list != null ? list : List.of();
+        return list != null ? list : new ArrayList<>();
     }
 
     @Override

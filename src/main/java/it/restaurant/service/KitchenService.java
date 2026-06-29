@@ -2,6 +2,7 @@ package it.restaurant.service;
 
 import it.restaurant.model.*;
 import it.restaurant.repository.DataStore;
+import it.restaurant.repository.DataStoreTransaction;
 import it.restaurant.repository.StorageKeys;
 import java.time.LocalDate;
 import java.util.List;
@@ -11,11 +12,13 @@ public class KitchenService {
     private static final double MENU_ACCEPTABILITY_FACTOR = 4.0 / 3.0;
 
     private final DataStore store;
+    private final DataStoreTransaction transaction;
     private RestaurantConfig config;
 
-    public KitchenService(DataStore store, RestaurantConfig config) {
+    public KitchenService(DataStore store, RestaurantConfig config, DataStoreTransaction transaction) {
         this.store = store;
         this.config = config;
+        this.transaction = transaction;
     }
 
     public void setConfig(RestaurantConfig config) { this.config = config; }
@@ -29,21 +32,25 @@ public class KitchenService {
     }
 
     public boolean addRecipe(Recipe recipe) {
-        List<Recipe> all = recipes();
-        boolean duplicate = all.stream().anyMatch(r -> r.getName().equalsIgnoreCase(recipe.getName()));
-        if (duplicate) return false;
-        all.add(recipe);
-        store.saveList(StorageKeys.RECIPES, all);
-        return true;
+        return transaction.write(() -> {
+            List<Recipe> all = recipes();
+            boolean duplicate = all.stream().anyMatch(r -> r.getName().equalsIgnoreCase(recipe.getName()));
+            if (duplicate) return false;
+            all.add(recipe);
+            store.saveList(StorageKeys.RECIPES, all);
+            return true;
+        });
     }
 
     public boolean addDish(Dish dish) {
-        List<Dish> all = dishes();
-        boolean duplicate = all.stream().anyMatch(d -> d.getName().equalsIgnoreCase(dish.getName()));
-        if (duplicate) return false;
-        all.add(dish);
-        store.saveList(StorageKeys.DISHES, all);
-        return true;
+        return transaction.write(() -> {
+            List<Dish> all = dishes();
+            boolean duplicate = all.stream().anyMatch(d -> d.getName().equalsIgnoreCase(dish.getName()));
+            if (duplicate) return false;
+            all.add(dish);
+            store.saveList(StorageKeys.DISHES, all);
+            return true;
+        });
     }
 
     public boolean isMenuAcceptable(ThemedMenu menu) {
@@ -51,12 +58,14 @@ public class KitchenService {
     }
 
     public boolean addThemedMenu(ThemedMenu menu) {
-        if (menu == null || !isMenuAcceptable(menu)) return false;
-        List<ThemedMenu> all = themedMenus();
-        boolean duplicate = all.stream().anyMatch(m -> m.getName().equalsIgnoreCase(menu.getName()));
-        if (duplicate) return false;
-        all.add(menu);
-        store.saveList(StorageKeys.THEMED_MENUS, all);
-        return true;
+        return transaction.write(() -> {
+            if (menu == null || !isMenuAcceptable(menu)) return false;
+            List<ThemedMenu> all = themedMenus();
+            boolean duplicate = all.stream().anyMatch(m -> m.getName().equalsIgnoreCase(menu.getName()));
+            if (duplicate) return false;
+            all.add(menu);
+            store.saveList(StorageKeys.THEMED_MENUS, all);
+            return true;
+        });
     }
 }

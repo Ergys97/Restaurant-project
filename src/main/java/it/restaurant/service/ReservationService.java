@@ -3,6 +3,7 @@ package it.restaurant.service;
 import it.restaurant.model.Reservation;
 import it.restaurant.model.RestaurantConfig;
 import it.restaurant.repository.DataStore;
+import it.restaurant.repository.DataStoreTransaction;
 import it.restaurant.repository.StorageKeys;
 import it.restaurant.service.event.ReservationObserver;
 import java.time.LocalDate;
@@ -14,11 +15,13 @@ public class ReservationService {
 
     private final RestaurantConfig config;
     private final DataStore store;
+    private final DataStoreTransaction transaction;
     private final List<ReservationObserver> observers = new ArrayList<>();
 
-    public ReservationService(RestaurantConfig config, DataStore store) {
+    public ReservationService(RestaurantConfig config, DataStore store, DataStoreTransaction transaction) {
         this.config = config;
         this.store = store;
+        this.transaction = transaction;
     }
 
     public void addObserver(ReservationObserver observer) { observers.add(observer); }
@@ -110,8 +113,10 @@ public class ReservationService {
     }
 
     public Optional<Reservation> createReservation(Reservation candidate) {
-        List<Reservation> existing = listReservations();
-        return createReservation(candidate, existing);
+        return transaction.write(() -> {
+            List<Reservation> existing = listReservations();
+            return createReservation(candidate, existing);
+        });
     }
 
     public Optional<Reservation> createReservation(Reservation candidate, List<Reservation> existing) {
@@ -126,19 +131,23 @@ public class ReservationService {
     }
 
     public boolean cancelReservation(String id) {
-        List<Reservation> all = store.loadList(StorageKeys.RESERVATIONS, Reservation.class);
-        boolean removed = all.removeIf(r -> r.getId().equals(id));
-        if (removed) {
-            store.saveList(StorageKeys.RESERVATIONS, all);
-        }
-        return removed;
+        return transaction.write(() -> {
+            List<Reservation> all = store.loadList(StorageKeys.RESERVATIONS, Reservation.class);
+            boolean removed = all.removeIf(r -> r.getId().equals(id));
+            if (removed) {
+                store.saveList(StorageKeys.RESERVATIONS, all);
+            }
+            return removed;
+        });
     }
 
     public void cleanExpired() {
-        List<Reservation> all = store.loadList(StorageKeys.RESERVATIONS, Reservation.class);
-        boolean removed = all.removeIf(r -> r.getDate().isBefore(LocalDate.now()));
-        if (removed) {
-            store.saveList(StorageKeys.RESERVATIONS, all);
-        }
+        transaction.write(() -> {
+            List<Reservation> all = store.loadList(StorageKeys.RESERVATIONS, Reservation.class);
+            boolean removed = all.removeIf(r -> r.getDate().isBefore(LocalDate.now()));
+            if (removed) {
+                store.saveList(StorageKeys.RESERVATIONS, all);
+            }
+        });
     }
 }

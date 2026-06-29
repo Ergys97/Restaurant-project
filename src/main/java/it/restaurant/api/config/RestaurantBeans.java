@@ -2,6 +2,7 @@ package it.restaurant.api.config;
 
 import it.restaurant.model.RestaurantConfig;
 import it.restaurant.repository.DataStore;
+import it.restaurant.repository.DataStoreTransaction;
 import it.restaurant.repository.JsonDataStore;
 import it.restaurant.repository.StorageKeys;
 import it.restaurant.service.KitchenService;
@@ -51,19 +52,24 @@ public class RestaurantBeans {
     }
 
     @Bean
-    ReservationService reservationService(RestaurantConfig config, DataStore store, List<ReservationObserver> observers) {
-        ReservationService service = new ReservationService(config, store);
+    DataStoreTransaction dataStoreTransaction() {
+        return new DataStoreTransaction();
+    }
+
+    @Bean
+    ReservationService reservationService(RestaurantConfig config, DataStore store, DataStoreTransaction transaction, List<ReservationObserver> observers) {
+        ReservationService service = new ReservationService(config, store, transaction);
         observers.forEach(service::addObserver);
         return service;
     }
 
     @Bean
-    KitchenService kitchenService(DataStore store, RestaurantConfig config) {
-        return new KitchenService(store, config);
+    KitchenService kitchenService(DataStore store, RestaurantConfig config, DataStoreTransaction transaction) {
+        return new KitchenService(store, config, transaction);
     }
 
     @Bean
-    WarehouseService warehouseService(DataStore store) {
-        return new WarehouseService(store);
+    WarehouseService warehouseService(DataStore store, DataStoreTransaction transaction) {
+        return new WarehouseService(store, transaction);
     }
 }

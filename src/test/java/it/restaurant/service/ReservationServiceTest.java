@@ -3,6 +3,7 @@ package it.restaurant.service;
 import static org.junit.jupiter.api.Assertions.*;
 
 import it.restaurant.model.*;
+import it.restaurant.repository.DataStoreTransaction;
 import it.restaurant.repository.InMemoryStore;
 import it.restaurant.repository.StorageKeys;
 import java.time.LocalDate;
@@ -10,6 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -28,7 +31,7 @@ class ReservationServiceTest {
         store.saveList(StorageKeys.INGREDIENTS, new ArrayList<>(List.of(new Ingredient("salame", 100, DAY))));
         store.saveList(StorageKeys.DRINKS, new ArrayList<>());
         store.saveList(StorageKeys.EXTRA_GOODS, new ArrayList<>());
-        service = new ReservationService(config, store);
+        service = new ReservationService(config, store, new DataStoreTransaction());
         Recipe recipe = new Recipe("salame", List.of(new Ingredient("salame", 15, DAY)), 0.4, 1.0, 10);
         dish = new Dish(recipe, DAY.plusDays(10));
     }
@@ -74,6 +77,32 @@ class ReservationServiceTest {
         assertFalse(service.createReservation(null, new ArrayList<>()).isPresent());
         assertFalse(service.createReservation(reservationOf(1, 301), new ArrayList<>()).isPresent());
         assertEquals(1, notified.size());
+    }
+
+    @Test
+    void concurrentReservationsDoNotExceedSeatCapacity() throws Exception {
+        RestaurantConfig config = new RestaurantConfig(2, 100.0,
+                List.of(), List.of(), List.of(), Map.of(), Map.of());
+        InMemoryStore store = new InMemoryStore();
+        ReservationService service = new ReservationService(config, store, new DataStoreTransaction());
+        service.addObserver(reservation -> {
+            List<Reservation> all = store.loadList(StorageKeys.RESERVATIONS, Reservation.class);
+            all.add(reservation);
+            store.saveList(StorageKeys.RESERVATIONS, all);
+        });
+
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        try {
+            var first = executor.submit(() -> service.createReservation(new Reservation(DAY, 2)).isPresent());
+            var second = executor.submit(() -> service.createReservation(new Reservation(DAY, 2)).isPresent());
+
+            int accepted = (first.get() ? 1 : 0) + (second.get() ? 1 : 0);
+
+            assertEquals(1, accepted);
+            assertEquals(1, store.loadList(StorageKeys.RESERVATIONS, Reservation.class).size());
+        } finally {
+            executor.shutdownNow();
+        }
     }
 
     @Test
