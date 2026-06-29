@@ -56,13 +56,17 @@ public class ReservationService {
         java.util.Map<String, Integer> requiredIngredients = new java.util.HashMap<>();
         for (var order : candidate.getDishOrders()) {
             for (var needed : order.getDish().getIngredients()) {
-                requiredIngredients.merge(needed.getName().toLowerCase(), order.getQuantity(), Integer::sum);
+                requiredIngredients.merge(needed.getName().toLowerCase(),
+                        needed.getQuantity() * order.getQuantity(),
+                        Integer::sum);
             }
         }
         for (var order : candidate.getMenuOrders()) {
             for (var dish : order.getMenu().getDishes()) {
                 for (var needed : dish.getIngredients()) {
-                    requiredIngredients.merge(needed.getName().toLowerCase(), order.getQuantity(), Integer::sum);
+                    requiredIngredients.merge(needed.getName().toLowerCase(),
+                            needed.getQuantity() * order.getQuantity(),
+                            Integer::sum);
                 }
             }
         }
@@ -105,8 +109,16 @@ public class ReservationService {
         return true;
     }
 
+    public Optional<Reservation> createReservation(Reservation candidate) {
+        List<Reservation> existing = listReservations();
+        return createReservation(candidate, existing);
+    }
+
     public Optional<Reservation> createReservation(Reservation candidate, List<Reservation> existing) {
-        if (candidate == null || !isSustainable(candidate, existing) || !checkStockSufficiency(candidate)) {
+        if (candidate == null
+                || candidate.getCovers() > availableSeats(candidate.getDate(), existing)
+                || !isSustainable(candidate, existing)
+                || !checkStockSufficiency(candidate)) {
             return Optional.empty();
         }
         observers.forEach(o -> o.onReservationConfirmed(candidate));

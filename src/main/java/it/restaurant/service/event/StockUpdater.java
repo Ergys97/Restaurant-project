@@ -42,8 +42,9 @@ public class StockUpdater implements ReservationObserver {
  
      private void consumeDishIngredients(java.util.List<Ingredient> stock, Dish dish, int portions) {
          for (Ingredient needed : dish.getIngredients()) {
+             int required = needed.getQuantity() * portions;
              FoodItems.findByName(stock, needed.getName())
-                     .ifPresent(i -> i.setQuantity(Math.max(0, i.getQuantity() - portions)));
+                     .ifPresent(i -> i.setQuantity(Math.max(0, i.getQuantity() - required)));
          }
      }
 }

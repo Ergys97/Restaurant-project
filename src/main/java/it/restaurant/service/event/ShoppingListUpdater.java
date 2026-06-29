@@ -47,7 +47,7 @@ public class ShoppingListUpdater implements ReservationObserver {
     private void addDishIngredients(List<Ingredient> target, Dish dish, int portions, LocalDate today) {
         for (Ingredient needed : dish.getIngredients()) {
             FoodItems.mergeQuantity(target,
-                    new Ingredient(needed.getName(), portions, ExpiryDates.random(today)));
+                    new Ingredient(needed.getName(), needed.getQuantity() * portions, ExpiryDates.random(today)));
         }
     }
 }

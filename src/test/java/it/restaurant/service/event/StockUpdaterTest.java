@@ -6,6 +6,7 @@ import it.restaurant.model.*;
 import it.restaurant.repository.*;
 import java.nio.file.Path;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -50,5 +51,27 @@ class StockUpdaterTest {
 
         assertEquals(0, store.loadList(StorageKeys.INGREDIENTS, Ingredient.class).get(0).getQuantity());
         assertEquals(0, store.loadList(StorageKeys.DRINKS, Drink.class).get(0).getQuantity());
+    }
+
+    @Test
+    void consumesRecipeIngredientQuantityTimesOrderedPortions() {
+        LocalDate day = LocalDate.of(2026, 7, 1);
+        InMemoryStore store = new InMemoryStore();
+        store.saveList(StorageKeys.INGREDIENTS, new ArrayList<>(List.of(
+                new Ingredient("farina", 20, day))));
+        store.saveList(StorageKeys.DRINKS, new ArrayList<>());
+        store.saveList(StorageKeys.EXTRA_GOODS, new ArrayList<>());
+
+        RestaurantConfig config = new RestaurantConfig(20, 2.0,
+                List.of(), List.of(), List.of(), Map.of(), Map.of());
+        Recipe recipe = new Recipe("Pizza", List.of(new Ingredient("farina", 3, day)), 0.5, 2.0, 10);
+        Dish dish = new Dish(recipe, day.plusDays(3));
+        Reservation reservation = new Reservation(day, 2);
+        reservation.addDishOrder(dish, 4);
+
+        new StockUpdater(store, config).onReservationConfirmed(reservation);
+
+        List<Ingredient> ingredients = store.loadList(StorageKeys.INGREDIENTS, Ingredient.class);
+        assertEquals(8, ingredients.get(0).getQuantity());
     }
 }
