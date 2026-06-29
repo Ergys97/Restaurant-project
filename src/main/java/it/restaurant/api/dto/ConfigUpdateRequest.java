@@ -3,8 +3,10 @@ package it.restaurant.api.dto;
 import it.restaurant.model.Drink;
 import it.restaurant.model.ExtraGood;
 import it.restaurant.model.Ingredient;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Map;
@@ -19,11 +21,17 @@ public class ConfigUpdateRequest {
     @DecimalMin("0.1")
     private Double workloadPerPerson;
 
+    @Valid
     private List<Ingredient> ingredients;
+
+    @Valid
     private List<Drink> drinks;
+
+    @Valid
     private List<ExtraGood> extraGoods;
-    private Map<String, Integer> perCapitaDrinks;
-    private Map<String, Integer> perCapitaExtraGoods;
+
+    private Map<@NotBlank String, @Min(0) Integer> perCapitaDrinks;
+    private Map<@NotBlank String, @Min(0) Integer> perCapitaExtraGoods;
 
     public Integer getSeats() { return seats; }
     public void setSeats(Integer seats) { this.seats = seats; }

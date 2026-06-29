@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -98,7 +99,12 @@ func (c *Client) send(method, path string, body any, out any) error {
 	defer response.Body.Close()
 
 	if response.StatusCode < 200 || response.StatusCode >= 300 {
-		return fmt.Errorf("%s %s returned %d", method, path, response.StatusCode)
+		payload, _ := io.ReadAll(response.Body)
+		message := strings.TrimSpace(string(payload))
+		if message == "" {
+			message = response.Status
+		}
+		return fmt.Errorf("%s %s returned %d: %s", method, path, response.StatusCode, message)
 	}
 	if out == nil {
 		return nil

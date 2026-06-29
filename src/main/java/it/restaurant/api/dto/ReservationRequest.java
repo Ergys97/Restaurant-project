@@ -1,5 +1,6 @@
 package it.restaurant.api.dto;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
@@ -14,7 +15,10 @@ public class ReservationRequest {
     @Min(1)
     private Integer covers;
 
+    @Valid
     private List<DishOrderRequest> dishOrders;
+
+    @Valid
     private List<MenuOrderRequest> menuOrders;
 
     public LocalDate getDate() { return date; }

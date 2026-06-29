@@ -2,6 +2,8 @@ package ui
 
 import (
 	"strconv"
+	"strings"
+	"time"
 
 	"restaurant-tui/internal/api"
 	tea "charm.land/bubbletea/v2"
@@ -86,6 +88,25 @@ func (m Model) createReservation() tea.Cmd {
 	}
 }
 
+func (m Model) formValidationError() string {
+	if strings.TrimSpace(m.form.date) == "" {
+		return "Data obbligatoria"
+	}
+	if _, err := time.Parse("2006-01-02", m.form.date); err != nil {
+		return "Data non valida: usa YYYY-MM-DD"
+	}
+	if atoiOrZero(m.form.covers) <= 0 {
+		return "Coperti non validi"
+	}
+	if atoiOrZero(m.form.quantity) <= 0 {
+		return "Quantita non valida"
+	}
+	if len(m.dishes) == 0 {
+		return "Nessun piatto disponibile"
+	}
+	return ""
+}
+
 func atoiOrZero(value string) int {
 	n, err := strconv.Atoi(value)
 	if err != nil {
@@ -127,9 +148,11 @@ func (m Model) handleFormKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	case "esc":
 		m.creating = false
 	case "enter":
-		if len(m.dishes) > 0 {
-			return m, m.createReservation()
+		if validation := m.formValidationError(); validation != "" {
+			m.status = validation
+			return m, nil
 		}
+		return m, m.createReservation()
 	case "tab":
 		m.form.field = (m.form.field + 1) % 4
 	case "shift+tab":

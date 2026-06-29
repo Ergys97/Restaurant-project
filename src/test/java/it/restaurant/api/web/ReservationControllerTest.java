@@ -104,6 +104,26 @@ class ReservationControllerTest {
     }
 
     @Test
+    void createWithInvalidNestedDishOrderReturns400() throws Exception {
+        String json = """
+            {
+                "date": "2026-07-01",
+                "covers": 4,
+                "dishOrders": [
+                    {"dishName": "", "quantity": 0}
+                ]
+            }
+        """;
+
+        mockMvc.perform(post("/api/reservations")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("Validation failed"));
+    }
+
+    @Test
     void deleteExistingReturns204() throws Exception {
         String response = mockMvc.perform(get("/api/reservations"))
                 .andReturn().getResponse().getContentAsString();

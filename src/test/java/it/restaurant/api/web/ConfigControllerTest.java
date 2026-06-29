@@ -74,6 +74,25 @@ class ConfigControllerTest {
     }
 
     @Test
+    void updateConfigRejectsNegativePerCapitaValues() throws Exception {
+        String json = """
+            {
+                "seats": 30,
+                "workloadPerPerson": 2.5,
+                "perCapitaDrinks": {
+                    "acqua": -1
+                }
+            }
+        """;
+
+        mockMvc.perform(put("/api/config")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400));
+    }
+
+    @Test
     void updateConfigWithInvalidDataReturns400() throws Exception {
         ConfigUpdateRequest request = new ConfigUpdateRequest();
         request.setWorkloadPerPerson(2.5);

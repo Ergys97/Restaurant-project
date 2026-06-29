@@ -1,5 +1,6 @@
 package it.restaurant.api.web;
 
+import it.restaurant.api.dto.ErrorResponse;
 import it.restaurant.api.dto.ReservationRequest;
 import it.restaurant.model.Dish;
 import it.restaurant.model.Reservation;
@@ -75,9 +76,12 @@ public class ReservationController {
         }
 
         List<Reservation> existing = reservationService.listReservations();
-        return reservationService.createReservation(reservation, existing)
-                .map(created -> ResponseEntity.status(HttpStatus.CREATED).body(created))
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.CONFLICT).build());
+        var created = reservationService.createReservation(reservation, existing);
+        if (created.isPresent()) {
+            return ResponseEntity.status(HttpStatus.CREATED).body(created.get());
+        }
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse(409, "Reservation cannot be accepted"));
     }
 
     @DeleteMapping("/{id}")

@@ -1,11 +1,20 @@
 package it.restaurant.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 
 public abstract class FoodItem {
+
+    @NotBlank
     private String name;
+
+    @Min(0)
     private int quantity;
+
+    @NotNull
     private LocalDate expiryDate;
 
     protected FoodItem() {} // Jackson
