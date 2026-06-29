@@ -71,11 +71,11 @@ class ReservationServiceTest {
         List<Reservation> notified = new ArrayList<>();
         service.addObserver(notified::add);
 
-        assertTrue(service.createReservation(reservationOf(2, 1), new ArrayList<>()).isPresent());
+        assertTrue(service.createReservation(reservationOf(2, 1)).isPresent());
         assertEquals(1, notified.size());
 
-        assertFalse(service.createReservation(null, new ArrayList<>()).isPresent());
-        assertFalse(service.createReservation(reservationOf(1, 301), new ArrayList<>()).isPresent());
+        assertFalse(service.createReservation(null).isPresent());
+        assertFalse(service.createReservation(reservationOf(1, 301)).isPresent());
         assertEquals(1, notified.size());
     }
 

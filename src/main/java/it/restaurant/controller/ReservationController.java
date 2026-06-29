@@ -60,7 +60,7 @@ public class ReservationController {
         int covers = ConsoleInput.readInt(Messages.ASK_PEOPLE_FOR_RESERVATION, 1, maxSeats);
         Reservation reservation = new Reservation(date, covers);
         fillOrders(reservation, menus, dishes, covers);
-        boolean accepted = reservationService.createReservation(reservation, existing).isPresent();
+        boolean accepted = reservationService.createReservation(reservation).isPresent();
         view.showLine(accepted ? Messages.RESERVATION_ACCEPTED : Messages.RESERVATION_REJECTED);
     }
 

@@ -115,11 +115,11 @@ public class ReservationService {
     public Optional<Reservation> createReservation(Reservation candidate) {
         return transaction.write(() -> {
             List<Reservation> existing = listReservations();
-            return createReservation(candidate, existing);
+            return acceptReservation(candidate, existing);
         });
     }
 
-    public Optional<Reservation> createReservation(Reservation candidate, List<Reservation> existing) {
+    private Optional<Reservation> acceptReservation(Reservation candidate, List<Reservation> existing) {
         if (candidate == null
                 || candidate.getCovers() > availableSeats(candidate.getDate(), existing)
                 || !isSustainable(candidate, existing)

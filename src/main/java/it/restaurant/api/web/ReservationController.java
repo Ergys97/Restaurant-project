@@ -75,8 +75,7 @@ public class ReservationController {
             }
         }
 
-        List<Reservation> existing = reservationService.listReservations();
-        var created = reservationService.createReservation(reservation, existing);
+        var created = reservationService.createReservation(reservation);
         if (created.isPresent()) {
             return ResponseEntity.status(HttpStatus.CREATED).body(created.get());
         }
